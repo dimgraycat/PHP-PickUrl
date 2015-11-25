@@ -8,6 +8,7 @@ use PickUrl\Config as PickUrlConfig;
 class Picker extends PickUrlConfig
 {
     public $client;
+    public $url;
     protected $method;
 
     public function __construct()

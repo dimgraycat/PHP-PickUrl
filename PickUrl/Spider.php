@@ -21,7 +21,6 @@ class Spider extends PickUrlConfig
 
     public function __construct()
     {
-        $this->picker = new PickUrlPickper();
     }
 
     public function crawl($url)
@@ -31,39 +30,43 @@ class Spider extends PickUrlConfig
 
         $list = $this->fileRead();
         if(!empty($url)) {
-            $crawler = $this->picker->client($this->cookies)->request($this->picker->getMethod(), $url);
+            $crawler = $this->picker()->client($this->cookies)->request(
+                $this->picker()->getMethod(), $url
+            );
             $this->cookie();
             $crawler->filter('a')->each(function($node) use (&$list) {
                 $this->anchorHref($list, $node);
             });
             $list['match']['urls'][base64_encode($url)] = true;
             $this->fileSave($list);
-            print "$url\n";
-            $this->runFilter($crawler);
+            $this->runHooks($crawler, $url);
             $url = $this->getCrawlUrl($url);
             $this->wait();
             unset($list);
             if($this->count >= self::USE_STREAM_LIMIT) {
-                $this->picker->reset($this->cookies);
+                $this->picker()->reset($this->cookies);
                 $this->count = 0;
             }
             $this->crawl($url);
         }
-            print "finish.\n";
     }
 
-    public function picker() {
+    public function picker()
+    {
+        if(empty($this->picker)) {
+            $this->picker = new PickUrlPickper();
+        }
         return $this->picker;
     }
 
-    protected function runFilter(&$crawler)
+    protected function runHooks(&$crawler, &$url)
     {
         foreach($this->filters as $code) {
-            $code($crawler);
+            $code($crawler, $url);
         }
     }
 
-    public function addFilter($code)
+    public function addHook($code)
     {
         if(is_callable($code)) {
             $this->filters[] = $code;
@@ -192,8 +195,8 @@ class Spider extends PickUrlConfig
 
     protected function cookie()
     {
-        $this->cookies = $this->picker->client()->getCookieJar()->all();
-        $this->picker->client($this->cookies);
+        $this->cookies = $this->picker()->client()->getCookieJar()->all();
+        $this->picker()->client($this->cookies);
     }
 
     protected function httpBuildUrl($uri)
@@ -201,8 +204,16 @@ class Spider extends PickUrlConfig
         $scheme   = isset($this->uri['scheme']) ? $this->uri['scheme'] . '://' : '';
         $host     = isset($this->uri['host']) ? $this->uri['host'] : '';
         $port     = isset($this->uri['port']) ? ':' . $this->uri['port'] : '';
-        $path     = isset($uri['path']) ? $uri['path'] : '';
+        $path     = isset($uri['path']) ? $this->getUriPath($uri['path']) : '';
         $query    = isset($uri['query']) ? '?' . $uri['query'] : '';
         return "$scheme$host$port/$path$query";
+    }
+
+    protected function getUriPath($path)
+    {
+        if(preg_match('/^\/.*/', $path)) {
+            return ltrim($path, '/');
+        }
+        return $path;
     }
 }
