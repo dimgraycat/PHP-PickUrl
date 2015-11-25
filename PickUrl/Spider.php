@@ -4,6 +4,7 @@ namespace PickUrl;
 
 use PickUrl\Config as PickUrlConfig;
 use PickUrl\Picker as PickUrlPickper;
+use Sabre\Uri;
 
 class Spider extends PickUrlConfig
 {
@@ -201,12 +202,10 @@ class Spider extends PickUrlConfig
 
     protected function httpBuildUrl($uri)
     {
-        $scheme   = isset($this->uri['scheme']) ? $this->uri['scheme'] . '://' : '';
-        $host     = isset($this->uri['host']) ? $this->uri['host'] : '';
-        $port     = isset($this->uri['port']) ? ':' . $this->uri['port'] : '';
-        $path     = isset($uri['path']) ? $this->getUriPath($uri['path']) : '';
-        $query    = isset($uri['query']) ? '?' . $uri['query'] : '';
-        return "$scheme$host$port/$path$query";
+        $base_url = Uri\build($this->uri);
+        unset($uri['fragment']);
+        $new_url    = Uri\build($uri);
+        return Uri\resolve($base_url, $new_url);
     }
 
     protected function getUriPath($path)
