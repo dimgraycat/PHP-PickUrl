@@ -207,12 +207,4 @@ class Spider extends PickUrlConfig
         $new_url    = Uri\build($uri);
         return Uri\resolve($base_url, $new_url);
     }
-
-    protected function getUriPath($path)
-    {
-        if(preg_match('/^\/.*/', $path)) {
-            return ltrim($path, '/');
-        }
-        return $path;
-    }
 }
