@@ -4,8 +4,8 @@ namespace PickUrl;
 
 class Config
 {
-    const VERSION = '1.0.0';
-    const DATE_APPROVED = '';
+    const VERSION = '0.0.1';
+    const DATE_APPROVED = '2015-11-25';
 
     const REQUEST_GET   = "GET";
     const REQUEST_POST  = "POST";
