@@ -8,17 +8,22 @@ use Sabre\Uri;
 
 class Spider extends PickUrlConfig
 {
-    const USE_STREAM_LIMIT = 20;
+    const USE_STREAM_LIMIT = 5;
     const WAIT_TIME = 10;
+
+    const CRAWL_BEFORE  = "before";
+    const CRAWL_AFTER   = "after";
 
     protected $picker;
     protected $cookies;
     protected $uri;
     protected $tmpdir;
     protected $tmpfile;
-    protected $count = 0;
     protected $wait_time;
-    protected $filters = array();
+    protected $filters = [
+        self::CRAWL_BEFORE  => [],
+        self::CRAWL_AFTER   => []
+    ];
 
     public function __construct()
     {
@@ -27,29 +32,34 @@ class Spider extends PickUrlConfig
     public function crawl($url)
     {
         $this->uri = parse_url($url);
-        $this->count++;
 
-        $list = $this->fileRead();
-        if(!empty($url)) {
+        $count = 0;
+        do {
+            $count++;
+            $list = $this->fileRead();
+            $this->runHooks(self::CRAWL_BEFORE, $crawler, $url);
             $crawler = $this->picker()->client($this->cookies)->request(
                 $this->picker()->getMethod(), $url
             );
             $this->cookie();
-            $crawler->filter('a')->each(function($node) use (&$list) {
-                $this->anchorHref($list, $node);
+            $urls = [];
+            $crawler->filter('a')->each(function($node) use (&$list, &$urls) {
+                $url = $this->anchorHref($list, $node);
+                $urls[$url] = true;
             });
+            $urls = array_keys($urls);
             $list['match']['urls'][base64_encode($url)] = true;
+            $this->runHooks(self::CRAWL_AFTER, $crawler, $url, $urls);
+            unset($urls);
             $this->fileSave($list);
-            $this->runHooks($crawler, $url);
             $url = $this->getCrawlUrl($url);
             $this->wait();
             unset($list);
-            if($this->count >= self::USE_STREAM_LIMIT) {
+            if($count >= self::USE_STREAM_LIMIT) {
                 $this->picker()->reset($this->cookies);
-                $this->count = 0;
+                $count = 0;
             }
-            $this->crawl($url);
-        }
+        } while(!empty($url));
     }
 
     public function picker()
@@ -60,17 +70,22 @@ class Spider extends PickUrlConfig
         return $this->picker;
     }
 
-    protected function runHooks(&$crawler, &$url)
+    protected function runHooks($hook_mode, &$crawler, &$url, $urls = [])
     {
-        foreach($this->filters as $code) {
-            $code($crawler, $url);
+        foreach($this->filters[$hook_mode] as $code) {
+            if($hook_mode == self::CRAWL_BEFORE) {
+                $code($crawler, $url, $urls);
+            }
+            if($hook_mode == self::CRAWL_AFTER) {
+                $code($crawler, $url, $urls);
+            }
         }
     }
 
-    public function addHook($code)
+    public function addHook($hook_mode = self::CRAWL_BEFORE, $code)
     {
         if(is_callable($code)) {
-            $this->filters[] = $code;
+            $this->filters[$hook_mode][] = $code;
         }
         return $this;
     }
@@ -161,22 +176,26 @@ class Spider extends PickUrlConfig
     {
         $href = $node->attr('href');
         $uri = parse_url($href);
+        $url;
         if(!empty($uri)) {
             if(array_key_exists('host', $uri) and $this->uri['host'] === $uri['host']) {
-                $key = base64_encode($href);
+                $url = $href;
+                $key = base64_encode($url);
                 if(!$this->hasUrl($key, $list)) {
                     $list['match']['urls'][$key] = false;
                 }
-                return;
-            }
-            if(!array_key_exists('host', $uri)) {
-                $key = base64_encode($this->httpBuildUrl($uri));
+                return $url;
+            } elseif(!array_key_exists('host', $uri)) {
+                $url = $this->httpBuildUrl($uri);
+                $key = base64_encode($url);
                 if(!$this->hasUrl($key, $list)) {
                     $list['match']['urls'][$key] = false;
                 }
-                return;
+                return $url;
             }
-            $list['else']['urls'][base64_encode($href)] = false;
+            $url = $this->httpBuildUrl($uri);
+            $list['else']['urls'][base64_encode($url)] = false;
+            return $url;
         }
     }
 
