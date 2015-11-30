@@ -37,22 +37,30 @@ class Spider extends PickUrlConfig
         do {
             $count++;
             $list = $this->fileRead();
-            $this->runHooks(self::CRAWL_BEFORE, $crawler, $url);
+            $urls = [];
+
             $crawler = $this->picker()->client($this->cookies)->request(
                 $this->picker()->getMethod(), $url
             );
-            $this->cookie();
-            $urls = [];
+            $this->setCookie();
+
+            // hook before
+            $this->runHooks(self::CRAWL_BEFORE, $crawler, $url);
+
+            // search for attribute href of anchor.
             $crawler->filter('a')->each(function($node) use (&$list, &$urls) {
                 $url = $this->anchorHref($list, $node);
                 $urls[$url] = true;
             });
             $urls = array_keys($urls);
-            $list['match']['urls'][base64_encode($url)] = true;
+
+            // hook after
             $this->runHooks(self::CRAWL_AFTER, $crawler, $url, $urls);
             unset($urls);
+
+            $list['match']['urls'][base64_encode($url)] = true;
             $this->fileSave($list);
-            $url = $this->getCrawlUrl($url);
+            $url = $this->getNextCrawlUrl($url);
             $this->wait();
             unset($list);
             if($count >= self::USE_STREAM_LIMIT) {
@@ -74,7 +82,7 @@ class Spider extends PickUrlConfig
     {
         foreach($this->filters[$hook_mode] as $code) {
             if($hook_mode == self::CRAWL_BEFORE) {
-                $code($crawler, $url, $urls);
+                $code($crawler, $url);
             }
             if($hook_mode == self::CRAWL_AFTER) {
                 $code($crawler, $url, $urls);
@@ -111,7 +119,7 @@ class Spider extends PickUrlConfig
         return $this->wait_time;
     }
 
-    protected function getCrawlUrl(&$url)
+    protected function getNextCrawlUrl(&$url)
     {
         $array = $this->fileRead();
         $key = base64_decode(array_search(false, $array['match']['urls']));
@@ -121,19 +129,25 @@ class Spider extends PickUrlConfig
 
     protected function fileSave($array)
     {
-        $path = realpath(sprintf('%s/%s', $this->getTmpDir(), $this->getTmpFile()));
-        $fp = @fopen($path, "w+");
+        $path = realpath(vsprintf('%s/%s', [
+            $this->getTmpDir(),
+            $this->getTmpFile()
+        ]));
+        $fp = fopen($path, "w+");
         fwrite($fp, json_encode($array));
         fclose($fp);
     }
 
     protected function fileRead()
     {
-        $path = realpath(sprintf('%s/%s', $this->getTmpDir(), $this->getTmpFile()));
+        $path = realpath(vsprintf('%s/%s', [
+            $this->getTmpDir(),
+            $this->getTmpFile()
+        ]));
         if(!is_file($path)) {
             return [];
         }
-        $data = json_decode(@file_get_contents($path), true);
+        $data = json_decode(file_get_contents($path), true);
         return $data;
     }
 
@@ -213,7 +227,7 @@ class Spider extends PickUrlConfig
         return false;
     }
 
-    protected function cookie()
+    protected function setCookie()
     {
         $this->cookies = $this->picker()->client()->getCookieJar()->all();
         $this->picker()->client($this->cookies);
