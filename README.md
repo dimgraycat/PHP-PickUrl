@@ -6,6 +6,28 @@ Requirements
 
 PHP-PickUrl depends on PHP 5.5+ and Goutte 1+ and Guzzle 6+.
 
+Installation
+------------
+This library can be found on [Packagist](https://packagist.org/packages/dimgraycat/pickurl).
+The recommended way to install this is through [composer](http://getcomposer.org).
+
+Edit your `composer.json` and add:
+
+```json
+{
+    "require": {
+        "dimgraycat/pickurl": "~0.0.2"
+    }
+}
+```
+
+And install dependencies:
+
+```bash
+$ curl -sS https://getcomposer.org/installer | php
+$ php composer.phar install
+```
+
 how to use
 ----------
 
