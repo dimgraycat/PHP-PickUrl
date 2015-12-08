@@ -7,8 +7,7 @@ use PickUrl\Config as PickUrlConfig;
 
 class Picker extends PickUrlConfig
 {
-    public $client;
-    public $url;
+    protected $client;
     protected $method;
 
     public function __construct()
@@ -32,6 +31,16 @@ class Picker extends PickUrlConfig
         if(!empty($cookies)) {
             $this->client->getCookieJar()->updateFromSetCookie($cookies);
         }
+    }
+
+    public function setHeader($key, $value)
+    {
+        $this->client->setHeader($key. $value);
+    }
+
+    public function setUserAgent($value)
+    {
+        $this->setHeader("User-Agent", $value);
     }
 
     public function setMethod($method = false)

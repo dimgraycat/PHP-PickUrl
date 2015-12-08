@@ -6,7 +6,7 @@ use PickUrl\Config as PickUrlConfig;
 use PickUrl\Picker as PickUrlPickper;
 use Sabre\Uri;
 
-class Spider extends PickUrlConfig
+class Spider extends PickUrlPickper
 {
     const USE_STREAM_LIMIT = 5;
     const WAIT_TIME = 10;
@@ -14,7 +14,6 @@ class Spider extends PickUrlConfig
     const CRAWL_BEFORE  = "before";
     const CRAWL_AFTER   = "after";
 
-    protected $picker;
     protected $cookies;
     protected $uri;
     protected $tmpdir;
@@ -39,8 +38,8 @@ class Spider extends PickUrlConfig
             $list = $this->fileRead();
             $urls = [];
 
-            $crawler = $this->picker()->client($this->cookies)->request(
-                $this->picker()->getMethod(), $url
+            $crawler = $this->client($this->cookies)->request(
+                $this->getMethod(), $url
             );
             $this->setCookie();
 
@@ -64,18 +63,10 @@ class Spider extends PickUrlConfig
             $this->wait();
             unset($list);
             if($count >= self::USE_STREAM_LIMIT) {
-                $this->picker()->reset($this->cookies);
+                $this->reset($this->cookies);
                 $count = 0;
             }
         } while(!empty($url));
-    }
-
-    public function picker()
-    {
-        if(empty($this->picker)) {
-            $this->picker = new PickUrlPickper();
-        }
-        return $this->picker;
     }
 
     protected function runHooks($hook_mode, &$crawler, &$url, $urls = [])
@@ -122,6 +113,9 @@ class Spider extends PickUrlConfig
     protected function getNextCrawlUrl(&$url)
     {
         $array = $this->fileRead();
+        if(empty($array)) {
+            return false;
+        }
         $key = base64_decode(array_search(false, $array['match']['urls']));
         unset($array);
         return $key;
@@ -129,10 +123,10 @@ class Spider extends PickUrlConfig
 
     protected function fileSave($array)
     {
-        $path = realpath(vsprintf('%s/%s', [
+        $path = vsprintf('%s/%s', [
             $this->getTmpDir(),
             $this->getTmpFile()
-        ]));
+        ]);
         $fp = fopen($path, "w+");
         fwrite($fp, json_encode($array));
         fclose($fp);
@@ -140,10 +134,10 @@ class Spider extends PickUrlConfig
 
     protected function fileRead()
     {
-        $path = realpath(vsprintf('%s/%s', [
+        $path = vsprintf('%s/%s', [
             $this->getTmpDir(),
             $this->getTmpFile()
-        ]));
+        ]);
         if(!is_file($path)) {
             return [];
         }
@@ -229,8 +223,8 @@ class Spider extends PickUrlConfig
 
     protected function setCookie()
     {
-        $this->cookies = $this->picker()->client()->getCookieJar()->all();
-        $this->picker()->client($this->cookies);
+        $this->cookies = $this->client()->getCookieJar()->all();
+        $this->client($this->cookies);
     }
 
     protected function httpBuildUrl($uri)
