@@ -16,7 +16,7 @@ Edit your `composer.json` and add:
 ```json
 {
     "require": {
-        "dimgraycat/pickurl": "~0.0.2"
+        "dimgraycat/pickurl": "~0.0.4"
     }
 }
 ```
@@ -28,8 +28,9 @@ $ curl -sS https://getcomposer.org/installer | php
 $ php composer.phar install
 ```
 
-how to use
+Usage
 ----------
+Create a Pickurl\Spider Client instance:
 
 ```php:sample.php
 <?php
@@ -40,9 +41,20 @@ $spider->addHook('before', function($crawler, $crawl_url) {
 ->addHook('after', function($crawler, $crawl_url, $searched_urls) {
     print_r($searched_urls);
 })
-->setWaitTime(1)
 ->crawl('http://foo.sample.com');
 ```
+
+set UserAgent:
+```php
+$this->setUserAgent("MyCrawler 1.0");
+```
+
+set WaitTime:
+```php
+// default is 10sec. It can be shortened by setting.
+$this->WaitTime(1);
+```
+
 
 License
 -------
