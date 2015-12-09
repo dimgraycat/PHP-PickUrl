@@ -16,7 +16,7 @@ Edit your `composer.json` and add:
 ```json
 {
     "require": {
-        "dimgraycat/pickurl": "~0.0.4"
+        "dimgraycat/pickurl": "*"
     }
 }
 ```
