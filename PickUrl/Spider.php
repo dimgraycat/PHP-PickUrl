@@ -10,7 +10,7 @@ class Spider extends PickUrlPickper
     const USE_STREAM_LIMIT = 5;
     const WAIT_TIME = 10;
 
-    const CRAWL_BEFORE  = 'before';
+    const CRAWL_BEFORE = 'before';
     const CRAWL_AFTER = 'after';
 
     protected $cookies;
@@ -179,7 +179,7 @@ class Spider extends PickUrlPickper
     public function getTmpFile()
     {
         if (empty($this->tmpfile)) {
-            $tmpfname = tempnam($this->getTmpDir(), "PiS");
+            $tmpfname = tempnam($this->getTmpDir(), 'PiS');
             $tmp = explode('/', $tmpfname);
             $this->tmpfile = array_pop($tmp);
             unset($tmp);
@@ -200,6 +200,7 @@ class Spider extends PickUrlPickper
                 if (!$this->hasUrl($key, $list)) {
                     $list['match']['urls'][$key] = false;
                 }
+
                 return $url;
             } elseif (!array_key_exists('host', $uri)) {
                 $url = $this->httpBuildUrl($uri);
@@ -226,7 +227,7 @@ class Spider extends PickUrlPickper
             return false;
         }
         if (array_key_exists('urls', $list['match'])) {
-            return (array_key_exists($key, $list['match']['urls']));
+            return array_key_exists($key, $list['match']['urls']);
         }
 
         return false;
@@ -243,6 +244,7 @@ class Spider extends PickUrlPickper
         $base_url = Uri\build($this->uri);
         unset($uri['fragment']);
         $new_url = Uri\build($uri);
+
         return Uri\resolve($base_url, $new_url);
     }
 }

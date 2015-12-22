@@ -22,6 +22,7 @@ class Picker extends PickUrlConfig
                 $this->client->getCookieJar()->updateFromSetCookie($cookies);
             }
         }
+
         return $this->client;
     }
 
