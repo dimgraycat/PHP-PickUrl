@@ -18,9 +18,9 @@ class Picker extends PickUrlConfig
     {
         if (empty($this->client)) {
             $this->client = new GoutteClient();
-            if (!empty($cookies)) {
-                $this->client->getCookieJar()->updateFromSetCookie($cookies);
-            }
+        }
+        if (!empty($cookies)) {
+            $this->client->getCookieJar()->updateFromSetCookie($cookies);
         }
 
         return $this->client;
@@ -36,7 +36,7 @@ class Picker extends PickUrlConfig
 
     public function setHeader($key, $value)
     {
-        $this->client->setHeader($key, $value);
+        $this->client()->setHeader($key, $value);
     }
 
     public function setUserAgent($value)
