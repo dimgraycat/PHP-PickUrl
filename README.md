@@ -1,6 +1,9 @@
 PHP-PickUrl, a simple PHP Web Scraper
 =====================================
 
+[![License](http://img.shields.io/badge/license-mit-blue.svg?style=flat-square)](https://github.com/dimgraycat/PHP-PickUrl/blob/master/LICENSE)
+[![Packagist](https://img.shields.io/packagist/v/dimgraycat/pickurl.svg?style=flat-square)](https://packagist.org/packages/dimgraycat/pickurl)
+
 Requirements
 ------------
 
